@@ -1,10 +1,455 @@
-import { Children, useState, react, useEffect } from 'react';
+import { Children, useState, react, useEffect, Component, useId } from 'react';
 import reactLogo from '../assets/react.svg';
+import { Formik, Field, Form, ErrorMessage } from 'formik';
+import * as Yup from 'yup';
 import viteLogo from '/vite.svg';
 import styles from './App.module.css';
 import './App.module.css';
 import clsx from 'clsx';
 import Product from './product/Product';
+import taskItem from './task.json';
+
+/////////////////////  Formik  ///////////////////////////
+
+const FeedbackSchema = Yup.object().shape({
+  username: Yup.string()
+    .min(2, 'Too Short!')
+    .max(50, 'Too Long!')
+    .required('Required'),
+  email: Yup.string().email('Must be valid email!').required('Required'),
+  message: Yup.string()
+    .min(3, 'Too short')
+    .max(256, 'Too long')
+    .required('Required'),
+  level: Yup.string().oneOf(['good', 'neutral', 'bad']).required('Required'),
+});
+
+const initialValues = {
+  username: '',
+  email: '',
+  message: '',
+  level: 'good',
+};
+
+const FeedbackForm = () => {
+  const nameFieldId = useId();
+  const emailFieldId = useId();
+  const msgFieldId = useId();
+  const levelFieldId = useId();
+
+  const handleSubmit = (values, actions) => {
+    console.log(values);
+    actions.resetForm();
+  };
+
+  return (
+    <Formik
+      initialValues={initialValues}
+      onSubmit={handleSubmit}
+      validationSchema={FeedbackSchema}
+    >
+      <Form>
+        <label htmlFor={nameFieldId}>Username</label>
+        <Field type="text" name="username" id={nameFieldId} />
+        <ErrorMessage name="username" component="span" />
+
+        <label htmlFor={emailFieldId}>Email</label>
+        <Field type="email" name="email" id={emailFieldId} />
+        <ErrorMessage name="email" component="span" />
+
+        <label htmlFor={msgFieldId}>Message</label>
+        <Field as="textarea" name="message" id={msgFieldId} rows="5" />
+        <ErrorMessage name="message" component="span" />
+
+        <label htmlFor={levelFieldId}>Service satisfaction level</label>
+        <Field as="select" name="level" id={levelFieldId}>
+          <option value="good">Good</option>
+          <option value="neutral">Neutral</option>
+          <option value="bad">Bad</option>
+        </Field>
+        <ErrorMessage name="level" component="span" />
+
+        <button type="submit">Submit</button>
+      </Form>
+    </Formik>
+  );
+};
+
+export const App = () => {
+  return (
+    <div>
+      <FeedbackForm />
+    </div>
+  );
+};
+
+/////////////////  колекція елементів  ///////////////////////
+
+// const Task = ({ data: { id, text }, onDelete }) => {
+//   return (
+//     <div>
+//       <p>{text}</p>
+//       <button onClick={() => onDelete(id)}>Delete</button>
+//     </div>
+//   );
+// };
+
+// const TaskList = ({ onDelete, tasks }) => {
+//   return (
+//     <ul>
+//       {tasks.map(task => (
+//         <li key={task.id}>
+//           <Task data={task} onDelete={onDelete} />
+//         </li>
+//       ))}
+//     </ul>
+//   );
+// };
+
+// const Filter = ({ value, onFilter }) => {
+//   return (
+//     <div>
+//       <p>Search by name</p>
+//       <input
+//         type="text"
+//         value={value}
+//         onChange={event => onFilter(event.target.value)}
+//       />
+//     </div>
+//   );
+// };
+
+// const Form = ({ onAdd }) => {
+//   const handleSubmit = event => {
+//     event.preventDefault();
+
+//     onAdd({
+//       id: Date.now(),
+//       text: event.target.elements.text.value,
+//     });
+//     event.target.reset();
+//   };
+
+//   return (
+//     <form onSubmit={handleSubmit}>
+//       <input type="text" name="text" />
+//       <button type="submit">Add task</button>
+//     </form>
+//   );
+// };
+
+// const App = () => {
+//   const [tasks, setTasks] = useState(taskItem);
+//   const [filter, setFilter] = useState('');
+
+//   const addTask = newTask => {
+//     setTasks(prevTasks => {
+//       return [...prevTasks, newTask];
+//     });
+//   };
+
+//   const deleteTask = taskId => {
+//     setTasks(prevTasks => {
+//       return prevTasks.filter(task => task.id !== taskId);
+//     });
+//   };
+
+//   const visibleTasks = tasks.filter(task =>
+//     task.text.toLowerCase().includes(filter.toLowerCase())
+//   );
+
+//   return (
+//     <div>
+//       <Form onAdd={addTask} />
+//       <Filter value={filter} onFilter={setFilter} />
+//       <TaskList onDelete={deleteTask} tasks={visibleTasks} />
+//     </div>
+//   );
+// };
+
+/////////////////  Form  ///////////////////////
+
+// const SearchBar = () => {
+//   const [inputValue, setInputValue] = useState('');
+
+//   const handleChange = event => {
+//     setInputValue(event.target.value);
+//   };
+
+//   return (
+//     <div>
+//       <input type="text" value={inputValue} onChange={handleChange} />
+//       <p>{inputValue}</p>
+//     </div>
+//   );
+// };
+
+// /////
+
+// // const LoginForm = ({ onLogin }) => {
+// //   const handleSubmit = event => {
+// //     event.preventDefault();
+
+// //     const form = event.target;
+// //     const { login, password } = form.elements;
+
+// //     onLogin({
+// //       login: login.value,
+// //       password: password.value,
+// //     });
+
+// //     form.reset();
+// //   };
+
+// //   const loginId = useId();
+// //   const passwordId = useId();
+
+// //   return (
+// //     <form onSubmit={handleSubmit}>
+// //       <label htmlFor={loginId}>Login</label>
+// //       <input type="text" name="login" id={loginId} />
+// //       <label htmlFor={passwordId}>Password</label>
+// //       <input type="password" name="password" id={passwordId} />
+// //       <button type="submit">Login</button>
+// //     </form>
+// //   );
+// // };
+
+// /////
+
+// const LangSwitcher = ({ value, onSelect }) => {
+//   const selectId = useId();
+
+//   return (
+//     <div>
+//       <label htmlFor={selectId}>Choose language</label>
+//       <select
+//         id={selectId}
+//         value={value}
+//         onChange={event => onSelect(event.target.value)}
+//       >
+//         <option value="en">English</option>
+//         <option value="uk">Ukrainian</option>
+//         <option value="pl">Polish</option>
+//       </select>
+//     </div>
+//   );
+// };
+
+// /////      контрольована форма
+
+// const ControlLoginForm = () => {
+//   const [values, setValues] = useState({ login: '', password: '' });
+
+//   //   const handleLoginChange = event => {
+//   //     setValues({ ...values, login: event.target.value });
+//   //   };
+
+//   //   const handlePwdChange = event => {
+//   //     setValues({ ...values, password: event.target.value });
+//   //   };
+
+//   const handleChange = event => {
+//     setValues({ ...values, [event.target.name]: event.target.value });
+//   };
+
+//   const handleSubmit = event => {
+//     event.preventDefault();
+
+//     console.log(values.login, values.password);
+
+//     setValues({ login: '', password: '' });
+//   };
+
+//   return (
+//     <form onSubmit={handleSubmit}>
+//       <input
+//         type="text"
+//         name="login"
+//         value={values.login}
+//         onChange={handleChange}
+//       />
+//       <input
+//         type="password"
+//         name="password"
+//         value={values.password}
+//         onChange={handleChange}
+//       />
+//       <button type="submit">Login</button>
+//     </form>
+//   );
+// };
+
+// const App = () => {
+//   const [lang, setLang] = useState('uk');
+//   const [coffeeSize, setCoffeeSize] = useState('sm');
+//   const [hasAccepted, setHasAccepted] = useState(false);
+
+//   //   const handleLogin = userData => {
+//   //     console.log(userData);
+//   //   };
+
+//   const handleSizeChange = event => {
+//     setCoffeeSize(event.target.value);
+//   };
+
+//   const handleChange = event => {
+//     setHasAccepted(event.target.checked);
+//   };
+
+//   return (
+//     <div>
+//       <>
+//         <ControlLoginForm />
+//       </>
+//       <>
+//         <label htmlFor="">
+//           <input
+//             type="checkbox"
+//             name="terms"
+//             checked={hasAccepted}
+//             onChange={handleChange}
+//           />
+//           I accept terms and conditions
+//         </label>
+//         <button type="button" disabled={!hasAccepted}>
+//           Proceed
+//         </button>
+//       </>
+//       <>
+//         <h2>Select coffee size</h2>
+//         <label htmlFor="">
+//           <input
+//             type="radio"
+//             name="coffeeSize"
+//             value="sm"
+//             checked={coffeeSize === 'sm'}
+//             onChange={handleSizeChange}
+//           />
+//           Small
+//         </label>
+//         <label htmlFor="">
+//           <input
+//             type="radio"
+//             name="coffeeSize"
+//             value="md"
+//             checked={coffeeSize === 'md'}
+//             onChange={handleSizeChange}
+//           />
+//           Medium
+//         </label>
+//         <label htmlFor="">
+//           <input
+//             type="radio"
+//             name="coffeeSize"
+//             value="lg"
+//             checked={coffeeSize === 'lg'}
+//             onChange={handleSizeChange}
+//           />
+//           Large
+//         </label>
+//       </>
+//       <p>Selected language: {lang}</p>
+//       <LangSwitcher value={lang} onSelect={setLang} />
+//       <SearchBar />
+//       {/* <LoginForm onLogin={handleLogin} /> */}
+//     </div>
+//   );
+// };
+
+//////////////////////////////////////////////////
+// import { Fragment } from 'react';
+
+// const poem = {
+//   lines: [
+//     'I write, erase, rewrite',
+//     'Erase again, and then',
+//     'A poppy blooms.',
+//   ],
+// };
+
+// function App() {
+//   return (
+//     <article>
+//       {poem.lines.map((line, i) => (
+//         <Fragment key={i}>
+//           {i > 0 && <hr />}
+//           <p>{line}</p>
+//         </Fragment>
+//       ))}
+//     </article>
+//   );
+// }
+
+////////////////////////////////////////////////
+
+// const recipes = [
+//   {
+//     id: 'greek-salad',
+//     name: 'Greek Salad',
+//     ingredients: ['tomatoes', 'cucumber', 'onion', 'olives', 'feta'],
+//   },
+//   {
+//     id: 'hawaiian-pizza',
+//     name: 'Hawaiian Pizza',
+//     ingredients: [
+//       'pizza crust',
+//       'pizza sauce',
+//       'mozzarella',
+//       'ham',
+//       'pineapple',
+//     ],
+//   },
+//   {
+//     id: 'hummus',
+//     name: 'Hummus',
+//     ingredients: ['chickpeas', 'olive oil', 'garlic cloves', 'lemon', 'tahini'],
+//   },
+// ];
+
+// function Reciep({ id, name, ingredients }) {
+//   return (
+//     <div>
+//       <h2>{name}</h2>
+//       <ul>
+//         {ingredients.map(ingredient => (
+//           <li key={ingredient}>{ingredient}</li>
+//         ))}
+//       </ul>
+//     </div>
+//   );
+// }
+
+// function App() {
+//   return (
+//     <div>
+//       <h1>Recipes</h1>
+//       {recipes.map(reciep => (
+//         <Reciep {...reciep} key={reciep.id} />
+//       ))}
+//     </div>
+//   );
+// }
+////////
+// function App() {
+//   return (
+//     <div>
+//       <h1>Recipes</h1>
+//       <ul>
+//         {recipes.map(rec => (
+//           <li key={rec.id}>
+//             <h2>{rec.name}</h2>
+//             <ul>
+//               {rec.ingredients.map(i => (
+//                 <li key={i}>{i}</li>
+//               ))}
+//             </ul>
+//           </li>
+//         ))}
+//       </ul>
+//     </div>
+//   );
+// }
 
 ///////////////////  Робота з LocalStorage  ////////////////
 // const App = () => {
