@@ -1,87 +1,254 @@
-import { Children, useState, react, useEffect, Component, useId } from 'react';
+import {
+  Children,
+  useState,
+  react,
+  useEffect,
+  Component,
+  useId,
+  useMemo,
+  useRef,
+  forwardRef,
+  createContext,
+} from 'react';
 import reactLogo from '../assets/react.svg';
 import { Formik, Field, Form, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
-import viteLogo from '/vite.svg';
+import { nanoid } from 'nanoid';
+import axios from 'axios';
 import styles from './App.module.css';
 import './App.module.css';
 import clsx from 'clsx';
 import Product from './product/Product';
 import taskItem from './task.json';
+import { object } from 'prop-types';
+import ArticleList from './ArticleList/ArticleList';
+import { fetchArticlesWithTopic } from './articles-api';
+import { SearchForm } from './SearchForm/SearchForm';
 
-/////////////////////  Formik  ///////////////////////////
+///////////////////  Хук useRef  //////////////////
 
-const FeedbackSchema = Yup.object().shape({
-  username: Yup.string()
-    .min(2, 'Too Short!')
-    .max(50, 'Too Long!')
-    .required('Required'),
-  email: Yup.string().email('Must be valid email!').required('Required'),
-  message: Yup.string()
-    .min(3, 'Too short')
-    .max(256, 'Too long')
-    .required('Required'),
-  level: Yup.string().oneOf(['good', 'neutral', 'bad']).required('Required'),
-});
+const Player = ({ source }) => {
+  const playerRef = useRef();
 
-const initialValues = {
-  username: '',
-  email: '',
-  message: '',
-  level: 'good',
-};
+  const play = () => playerRef.current.play();
+  const pause = () => playerRef.current.pause();
 
-const FeedbackForm = () => {
-  const nameFieldId = useId();
-  const emailFieldId = useId();
-  const msgFieldId = useId();
-  const levelFieldId = useId();
-
-  const handleSubmit = (values, actions) => {
-    console.log(values);
-    actions.resetForm();
-  };
-
-  return (
-    <Formik
-      initialValues={initialValues}
-      onSubmit={handleSubmit}
-      validationSchema={FeedbackSchema}
-    >
-      <Form>
-        <label htmlFor={nameFieldId}>Username</label>
-        <Field type="text" name="username" id={nameFieldId} />
-        <ErrorMessage name="username" component="span" />
-
-        <label htmlFor={emailFieldId}>Email</label>
-        <Field type="email" name="email" id={emailFieldId} />
-        <ErrorMessage name="email" component="span" />
-
-        <label htmlFor={msgFieldId}>Message</label>
-        <Field as="textarea" name="message" id={msgFieldId} rows="5" />
-        <ErrorMessage name="message" component="span" />
-
-        <label htmlFor={levelFieldId}>Service satisfaction level</label>
-        <Field as="select" name="level" id={levelFieldId}>
-          <option value="good">Good</option>
-          <option value="neutral">Neutral</option>
-          <option value="bad">Bad</option>
-        </Field>
-        <ErrorMessage name="level" component="span" />
-
-        <button type="submit">Submit</button>
-      </Form>
-    </Formik>
-  );
-};
-
-export const App = () => {
   return (
     <div>
-      <FeedbackForm />
+      <video src={source} ref={playerRef}>
+        Sorry, your browser does not support embedded videos.
+      </video>
+      <div>
+        <button onClick={play}>Play</button>
+        <button onClick={pause}>Pause</button>
+      </div>
     </div>
   );
 };
+
+const CustomButton = forwardRef((props, ref) => (
+  <button ref={ref}>{props.children}</button>
+));
+
+const App = () => {
+  const btnRef = useRef();
+
+  useEffect(() => btnRef.current.focus(), []);
+
+  return (
+    <>
+      <CustomButton ref={btnRef}>Button with forwarded ref</CustomButton>
+      <Player source="http://media.w3.org/2010/05/sintel/trailer.mp4" />;
+    </>
+  );
+};
+
+////////////////////////
+// const App = () => {
+//   const valueRef = useRef(0);
+
+//   useEffect(() => {
+//     // Виконається лише один раз під час монтування.
+//     // Наступні оновлення значення рефа не
+//     // викличуть оновлення компонента
+//     console.log(valueRef.current);
+//   });
+
+//   const handleClick = () => {
+//     valueRef.current += 1;
+//   };
+//   console.log(valueRef.current);
+
+//   return <button onClick={handleClick}>Click to update ref value</button>;
+// };
+
+//////////////////////////////////
+// const App = () => {
+//   const [value, setValue] = useState(0);
+//   const btnRef = useRef();
+
+//   // Буде undefined на першому рендері
+//   // і посиланням на DOM-елемент всі наступні
+//   console.log('App: ', btnRef.current);
+
+//   useEffect(() => {
+//     // Ефект виконується після монтування,
+//     // тому завжди буде посиланням на DOM-елемент
+//     console.log('useEffect: ', btnRef.current);
+//   });
+
+//   const handleClick = () => {
+//     // Кліки будуть після монтування,
+//     // тому завжди буде посиланням на DOM-елемент
+//     console.log('handleClick: ', btnRef.current);
+//   };
+
+//   return (
+//     <>
+//       <button onClick={() => setValue(value + 1)}>
+//         Update value to trigger re-render
+//       </button>
+//       <button ref={btnRef} onClick={handleClick}>
+//         Button with ref
+//       </button>
+//     </>
+//   );
+// };
+
+////////////////////  Хук useMemo  //////////////////////
+// const App = () => {
+//   const [planets, setPlanets] = useState(['Earth', 'Mars', 'Jupiter', 'Venus']);
+//   const [query, setQuery] = useState('');
+//   const [clicks, setClicks] = useState(0);
+
+//   const filteredPlanets = useMemo(
+//     () => planets.filter(planet => planet.includes(query)),
+//     [planets, query]
+//   );
+
+//   return (
+//     <>
+//       <button onClick={() => setClicks(clicks + 1)}>
+//         Number of clicks: {clicks}
+//       </button>
+//       <ul>
+//         {filteredPlanets.map(planet => (
+//           <li key={planet}>{planet}</li>
+//         ))}
+//       </ul>
+//     </>
+//   );
+// };
+///////////////  HTTP-запити  /////////////////////////
+
+// export const App = () => {
+//   const [articles, setArticles] = useState(null);
+//   const [loading, setLoading] = useState(false);
+//   const [error, setError] = useState(false);
+
+//   const handleSearch = async topic => {
+//     try {
+//       setLoading(true);
+//       setError(false);
+//       setArticles([]);
+
+//       const data = await fetchArticlesWithTopic(topic);
+//       setArticles(data);
+//     } catch (error) {
+//       setError(true);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   return (
+//     <div>
+//       <h1>Latest articles</h1>
+
+//       <SearchForm onSearch={handleSearch} />
+
+//       {loading && <p>Loading data, please wait...</p>}
+//       {error && (
+//         <p>Whoops, something went wrong! Please try reloading this page!</p>
+//       )}
+//       {articles && <ArticleList items={articles} />}
+//     </div>
+//   );
+// };
+
+/////////////////////  Formik  ///////////////////////////
+
+// const FeedbackSchema = Yup.object().shape({
+//   username: Yup.string()
+//     .min(2, 'Too Short!')
+//     .max(50, 'Too Long!')
+//     .required('Required'),
+//   email: Yup.string().email('Must be valid email!').required('Required'),
+//   message: Yup.string()
+//     .min(3, 'Too short')
+//     .max(256, 'Too long')
+//     .required('Required'),
+//   level: Yup.string().oneOf(['good', 'neutral', 'bad']).required('Required'),
+// });
+
+// const initialValues = {
+//   username: '',
+//   email: '',
+//   message: '',
+//   level: 'good',
+// };
+
+// const FeedbackForm = () => {
+//   const nameFieldId = useId();
+//   const emailFieldId = useId();
+//   const msgFieldId = useId();
+//   const levelFieldId = useId();
+
+//   const handleSubmit = (values, actions) => {
+//     console.log(values);
+//     actions.resetForm();
+//   };
+
+//   return (
+//     <Formik
+//       initialValues={initialValues}
+//       onSubmit={handleSubmit}
+//       validationSchema={FeedbackSchema}
+//     >
+//       <Form>
+//         <label htmlFor={nameFieldId}>Username</label>
+//         <Field type="text" name="username" id={nameFieldId} />
+//         <ErrorMessage name="username" component="span" />
+
+//         <label htmlFor={emailFieldId}>Email</label>
+//         <Field type="email" name="email" id={emailFieldId} />
+//         <ErrorMessage name="email" component="span" />
+
+//         <label htmlFor={msgFieldId}>Message</label>
+//         <Field as="textarea" name="message" id={msgFieldId} rows="5" />
+//         <ErrorMessage name="message" component="span" />
+
+//         <label htmlFor={levelFieldId}>Service satisfaction level</label>
+//         <Field as="select" name="level" id={levelFieldId}>
+//           <option value="good">Good</option>
+//           <option value="neutral">Neutral</option>
+//           <option value="bad">Bad</option>
+//         </Field>
+//         <ErrorMessage name="level" component="span" />
+
+//         <button type="submit">Submit</button>
+//       </Form>
+//     </Formik>
+//   );
+// };
+
+// export const App = () => {
+//   return (
+//     <div>
+//       <FeedbackForm />
+//     </div>
+//   );
+// };
 
 /////////////////  колекція елементів  ///////////////////////
 
