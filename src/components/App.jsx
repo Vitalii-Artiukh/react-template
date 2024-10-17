@@ -10,6 +10,7 @@ import {
   forwardRef,
   createContext,
 } from 'react';
+import Modal from 'react-modal';
 import reactLogo from '../assets/react.svg';
 import { Formik, Field, Form, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
@@ -24,44 +25,148 @@ import { object } from 'prop-types';
 import ArticleList from './ArticleList/ArticleList';
 import { fetchArticlesWithTopic } from './articles-api';
 import { SearchForm } from './SearchForm/SearchForm';
+import { NavLink, Route, Routes, useParams } from 'react-router-dom';
+
+/////////////////  Компоненти <Route> та <Routes>  /////////
+/////////////////  Компоненти <Link> та <NavLink>  /////////
+
+// const ProductDetails = () => {
+//   const { productId } = useParams();
+//   return <div>Now showing product with id - {productId}</div>;
+// };
+
+// const buildLinkClass = ({ isActive }) => {
+//   return clsx(styles.link, isActive && styles.active);
+// };
+
+// const App = () => {
+//   return (
+//     <div>
+//       {/* <nav>
+//         <Link to="/">Home</Link>
+//         <Link to="/about">About</Link>
+//         <Link to="/products">Products</Link>
+//       </nav> */}
+
+//       <nav className={styles.nav}>
+//         <NavLink to="/" className={buildLinkClass}>
+//           Home
+//         </NavLink>
+//         <NavLink to="/about" className={buildLinkClass}>
+//           About
+//         </NavLink>
+//         <NavLink to="/product" className={buildLinkClass}>
+//           Product
+//         </NavLink>
+//       </nav>
+//       <Routes>
+//         <Route path="/" element={<Home />} />
+//         <Route path="/about" element={<About />} />
+//         <Route path="/product" element={<Product />} />
+
+//         <Route path="/product/:productId" element={<ProductDetails />} />
+
+//         <Route path="*" element={<NotFound />} />
+//       </Routes>
+//     </div>
+//   );
+// };
+
+//////////////////  React Modal  //////////////////
+// Modal.setAppElement('#root');
+
+// const customStyles = {
+//   content: {
+//     top: '50%',
+//     left: '50%',
+//     right: 'auto',
+//     bottom: 'auto',
+//     marginRight: '-50%',
+//     transform: 'translate(-50%, -50%)',
+//   },
+// };
+
+// // Make sure to bind modal to your appElement (https://reactcommunity.org/react-modal/accessibility/)
+
+// function App() {
+//   let subtitle;
+//   const [modalIsOpen, setIsOpen] = useState(false);
+
+//   function openModal() {
+//     setIsOpen(true);
+//   }
+
+//   function afterOpenModal() {
+//     // references are now sync'd and can be accessed.
+//     subtitle.style.color = '#f00';
+//   }
+
+//   function closeModal() {
+//     setIsOpen(false);
+//   }
+
+//   return (
+//     <div>
+//       <button onClick={openModal}>Open Modal</button>
+//       <Modal
+//         isOpen={modalIsOpen}
+//         onAfterOpen={afterOpenModal}
+//         onRequestClose={closeModal}
+//         style={customStyles}
+//         contentLabel="Example Modal"
+//       >
+//         <h2 ref={_subtitle => (subtitle = _subtitle)}>Hello</h2>
+//         <button onClick={closeModal}>close</button>
+//         <div>I am a modal</div>
+//         <form>
+//           <input />
+//           <button>tab navigation</button>
+//           <button>stays</button>
+//           <button>inside</button>
+//           <button>the modal</button>
+//         </form>
+//       </Modal>
+//     </div>
+//   );
+// }
 
 ///////////////////  Хук useRef  //////////////////
 
-const Player = ({ source }) => {
-  const playerRef = useRef();
+// const Player = ({ source }) => {
+//   const playerRef = useRef();
 
-  const play = () => playerRef.current.play();
-  const pause = () => playerRef.current.pause();
+//   const play = () => playerRef.current.play();
+//   const pause = () => playerRef.current.pause();
 
-  return (
-    <div>
-      <video src={source} ref={playerRef}>
-        Sorry, your browser does not support embedded videos.
-      </video>
-      <div>
-        <button onClick={play}>Play</button>
-        <button onClick={pause}>Pause</button>
-      </div>
-    </div>
-  );
-};
+//   return (
+//     <div>
+//       <video src={source} ref={playerRef}>
+//         Sorry, your browser does not support embedded videos.
+//       </video>
+//       <div>
+//         <button onClick={play}>Play</button>
+//         <button onClick={pause}>Pause</button>
+//       </div>
+//     </div>
+//   );
+// };
 
-const CustomButton = forwardRef((props, ref) => (
-  <button ref={ref}>{props.children}</button>
-));
+// const CustomButton = forwardRef((props, ref) => (
+//   <button ref={ref}>{props.children}</button>
+// ));
 
-const App = () => {
-  const btnRef = useRef();
+// const App = () => {
+//   const btnRef = useRef();
 
-  useEffect(() => btnRef.current.focus(), []);
+//   useEffect(() => btnRef.current.focus(), []);
 
-  return (
-    <>
-      <CustomButton ref={btnRef}>Button with forwarded ref</CustomButton>
-      <Player source="http://media.w3.org/2010/05/sintel/trailer.mp4" />;
-    </>
-  );
-};
+//   return (
+//     <>
+//       <CustomButton ref={btnRef}>Button with forwarded ref</CustomButton>
+//       <Player source="http://media.w3.org/2010/05/sintel/trailer.mp4" />;
+//     </>
+//   );
+// };
 
 ////////////////////////
 // const App = () => {
