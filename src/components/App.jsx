@@ -10,22 +10,213 @@ import {
   forwardRef,
   createContext,
 } from 'react';
-import Modal from 'react-modal';
-import reactLogo from '../assets/react.svg';
-import { Formik, Field, Form, ErrorMessage } from 'formik';
-import * as Yup from 'yup';
-import { nanoid } from 'nanoid';
-import axios from 'axios';
-import styles from './App.module.css';
-import './App.module.css';
-import clsx from 'clsx';
-import Product from './product/Product';
-import taskItem from './task.json';
-import { object } from 'prop-types';
-import ArticleList from './ArticleList/ArticleList';
-import { fetchArticlesWithTopic } from './articles-api';
-import { SearchForm } from './SearchForm/SearchForm';
+import { useDispatch, useSelector } from 'react-redux';
 import { NavLink, Route, Routes, useParams } from 'react-router-dom';
+import clsx from 'clsx';
+import { MdClose } from 'react-icons/md';
+import css from './App.module.css';
+import cssAppBar from './css/AppBar.module.css';
+import cssButton from './css/Button.module.css';
+import cssLayout from './css/Layout.module.css';
+import cssTask from './css/Task.module.css';
+import cssTaskCounter from './css/TaskCounter.module.css';
+import cssTaskForm from './css/TaskForm.module.css';
+import cssTaskList from './css/TaskList.module.css';
+import { addTask, deleteTask, toggleCompleted } from '../redux/tasksSlice';
+import { setStatusFilter } from '../redux/filtersSlice';
+
+export const AppBar = () => {
+  return (
+    <header className={cssAppBar.wrapper}>
+      <section className={cssAppBar.section}>
+        <h2 className={cssAppBar.title}>Tasks</h2>
+        <TaskCounter />
+      </section>
+      <section className={cssAppBar.section}>
+        <h2 className={cssAppBar.title}>Filter by status</h2>
+        <StatusFilter />
+      </section>
+    </header>
+  );
+};
+
+export const Button = ({
+  selected = false,
+  type = 'button',
+  children,
+  ...otherProps
+}) => {
+  return (
+    <button
+      className={clsx(cssButton.btn, {
+        [cssButton.isSelected]: selected,
+      })}
+      type={type}
+      {...otherProps}
+    >
+      {children}
+    </button>
+  );
+};
+
+export const Layout = ({ children }) => {
+  return <main className={css.container}>{children}</main>;
+};
+
+export const StatusFilter = () => {
+  const filter = useSelector(state => state.filters.status);
+  const dispatch = useDispatch();
+
+  const handleFilterChange = filter => {
+    dispatch(setStatusFilter(filter));
+  };
+
+  return (
+    <div className={cssLayout.wrapper}>
+      <Button
+        type="button"
+        onClick={() => handleFilterChange('all')}
+        selected={filter === 'all' && 'is active'}
+      >
+        All{' '}
+      </Button>
+      <Button
+        type="button"
+        onClick={() => handleFilterChange('active')}
+        selected={filter === 'active' && 'is active'}
+      >
+        Active{' '}
+      </Button>
+      <Button
+        type="button"
+        onClick={() => handleFilterChange('completed')}
+        selected={filter === 'completed' && 'is active'}
+      >
+        Completed{' '}
+      </Button>
+    </div>
+  );
+};
+
+export const Task = ({ task }) => {
+  const dispatch = useDispatch();
+
+  const handleDelete = () => {
+    dispatch(deleteTask(task.id));
+  };
+
+  const handleToggle = () => {
+    dispatch(toggleCompleted(task.id));
+  };
+
+  return (
+    <div className={cssTask.wrapper}>
+      <input
+        onChange={handleToggle}
+        type="checkbox"
+        className={cssTask.checkbox}
+        checked={task.completed}
+      />
+      <p className={cssTask.text}>{task.text}</p>
+      <button className={cssTask.btn} type="button" onClick={handleDelete}>
+        <MdClose size={24} />
+      </button>
+    </div>
+  );
+};
+
+export const TaskCounter = () => {
+  const tasks = useSelector(state => state.tasks.items);
+
+  const count = tasks.reduce(
+    (acc, task) => {
+      if (task.completed) {
+        acc.completed += 1;
+      } else {
+        acc.active += 1;
+      }
+      return acc;
+    },
+    { active: 0, completed: 0 }
+  );
+
+  return (
+    <div>
+      <p className={cssTaskCounter.text}>Active: {count.active}</p>
+      <p className={cssTaskCounter.text}>Completed: {count.completed}</p>
+    </div>
+  );
+};
+
+export const TaskForm = () => {
+  const dispatch = useDispatch();
+
+  const handleSubmit = event => {
+    event.preventDefault();
+    const form = event.target;
+
+    dispatch(
+      addTask({
+        id: crypto.randomUUID(),
+        completed: false,
+        text: form.elements.text.value,
+      })
+    );
+
+    form.reset();
+  };
+
+  return (
+    <form className={cssTaskForm.form} onSubmit={handleSubmit}>
+      <input
+        className={cssTaskForm.field}
+        type="text"
+        name="text"
+        placeholder="Enter task text..."
+      />
+      <Button type="submit">Add task</Button>
+    </form>
+  );
+};
+/////////
+const getVisibleTasks = (tasks, statusFilter) => {
+  switch (statusFilter) {
+    case 'active':
+      return tasks.filter(task => !task.completed);
+
+    case 'completed':
+      return tasks.filter(task => task.completed);
+
+    default:
+      return tasks;
+  }
+};
+/////////
+export const TaskList = () => {
+  const tasks = useSelector(state => state.tasks.items);
+
+  const statusFilter = useSelector(state => state.filters.status);
+  const visibleTasks = getVisibleTasks(tasks, statusFilter);
+  return (
+    <ul className={cssTaskList.list}>
+      {visibleTasks.map(task => (
+        <li className={cssTaskList.listItem} key={task.id}>
+          <Task task={task} />
+        </li>
+      ))}
+    </ul>
+  );
+};
+
+const App = () => {
+  return (
+    <Layout>
+      <AppBar />
+      <TaskForm />
+      <TaskList />
+    </Layout>
+  );
+};
 
 /////////////////  Компоненти <Route> та <Routes>  /////////
 /////////////////  Компоненти <Link> та <NavLink>  /////////
