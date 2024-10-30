@@ -22,18 +22,30 @@ import cssTask from './css/Task.module.css';
 import cssTaskCounter from './css/TaskCounter.module.css';
 import cssTaskForm from './css/TaskForm.module.css';
 import cssTaskList from './css/TaskList.module.css';
-import { addTask, deleteTask, toggleCompleted } from '../redux/tasksSlice';
+// import { addTask, deleteTask, toggleCompleted } from '../redux/tasksSlice';
 import { setStatusFilter } from '../redux/filtersSlice';
+import {
+  addTask,
+  deleteTask,
+  fetchTasks,
+  toggleCompleted,
+} from '../redux/operations';
+import {
+  getError,
+  getIsLoading,
+  getStatusFilter,
+  getTasks,
+} from '../redux/selectors';
 
 export const AppBar = () => {
   return (
-    <header className={cssAppBar.wrapper}>
-      <section className={cssAppBar.section}>
-        <h2 className={cssAppBar.title}>Tasks</h2>
+    <header className={css.wrapper}>
+      <section className={css.section}>
+        <h2 className={css.title}>Tasks</h2>
         <TaskCounter />
       </section>
-      <section className={cssAppBar.section}>
-        <h2 className={cssAppBar.title}>Filter by status</h2>
+      <section className={css.section}>
+        <h2 className={css.title}>Filter by status</h2>
         <StatusFilter />
       </section>
     </header>
@@ -48,8 +60,8 @@ export const Button = ({
 }) => {
   return (
     <button
-      className={clsx(cssButton.btn, {
-        [cssButton.isSelected]: selected,
+      className={clsx(css.btn, {
+        [css.isSelected]: selected,
       })}
       type={type}
       {...otherProps}
@@ -64,35 +76,30 @@ export const Layout = ({ children }) => {
 };
 
 export const StatusFilter = () => {
-  const filter = useSelector(state => state.filters.status);
   const dispatch = useDispatch();
+  const filter = useSelector(getStatusFilter);
 
-  const handleFilterChange = filter => {
-    dispatch(setStatusFilter(filter));
-  };
+  const handleFilterChange = filter => dispatch(setStatusFilter(filter));
 
   return (
-    <div className={cssLayout.wrapper}>
+    <div className={css.wrapper}>
       <Button
-        type="button"
+        selected={filter === 'all'}
         onClick={() => handleFilterChange('all')}
-        selected={filter === 'all' && 'is active'}
       >
-        All{' '}
+        All
       </Button>
       <Button
-        type="button"
+        selected={filter === 'active'}
         onClick={() => handleFilterChange('active')}
-        selected={filter === 'active' && 'is active'}
       >
-        Active{' '}
+        Active
       </Button>
       <Button
-        type="button"
+        selected={filter === 'completed'}
         onClick={() => handleFilterChange('completed')}
-        selected={filter === 'completed' && 'is active'}
       >
-        Completed{' '}
+        Completed
       </Button>
     </div>
   );
@@ -101,24 +108,21 @@ export const StatusFilter = () => {
 export const Task = ({ task }) => {
   const dispatch = useDispatch();
 
-  const handleDelete = () => {
-    dispatch(deleteTask(task.id));
-  };
-
+  const handleDelete = () => dispatch(deleteTask(task.id));
   const handleToggle = () => {
-    dispatch(toggleCompleted(task.id));
+    dispatch(toggleCompleted(task));
   };
 
   return (
-    <div className={cssTask.wrapper}>
+    <div className={css.wrapper}>
       <input
-        onChange={handleToggle}
         type="checkbox"
-        className={cssTask.checkbox}
+        className={css.checkbox}
         checked={task.completed}
+        onChange={handleToggle}
       />
-      <p className={cssTask.text}>{task.text}</p>
-      <button className={cssTask.btn} type="button" onClick={handleDelete}>
+      <p className={css.text}>{task.text}</p>
+      <button className={css.btn} onClick={handleDelete}>
         <MdClose size={24} />
       </button>
     </div>
@@ -126,7 +130,7 @@ export const Task = ({ task }) => {
 };
 
 export const TaskCounter = () => {
-  const tasks = useSelector(state => state.tasks.items);
+  const tasks = useSelector(getTasks);
 
   const count = tasks.reduce(
     (acc, task) => {
@@ -142,8 +146,8 @@ export const TaskCounter = () => {
 
   return (
     <div>
-      <p className={cssTaskCounter.text}>Active: {count.active}</p>
-      <p className={cssTaskCounter.text}>Completed: {count.completed}</p>
+      <p className={css.text}>Active: {count.active}</p>
+      <p className={css.text}>Completed: {count.completed}</p>
     </div>
   );
 };
@@ -154,22 +158,14 @@ export const TaskForm = () => {
   const handleSubmit = event => {
     event.preventDefault();
     const form = event.target;
-
-    dispatch(
-      addTask({
-        id: crypto.randomUUID(),
-        completed: false,
-        text: form.elements.text.value,
-      })
-    );
-
+    dispatch(addTask(event.target.elements.text.value));
     form.reset();
   };
 
   return (
-    <form className={cssTaskForm.form} onSubmit={handleSubmit}>
+    <form className={css.form} onSubmit={handleSubmit}>
       <input
-        className={cssTaskForm.field}
+        className={css.field}
         type="text"
         name="text"
         placeholder="Enter task text..."
@@ -183,24 +179,22 @@ const getVisibleTasks = (tasks, statusFilter) => {
   switch (statusFilter) {
     case 'active':
       return tasks.filter(task => !task.completed);
-
     case 'completed':
       return tasks.filter(task => task.completed);
-
     default:
       return tasks;
   }
 };
-/////////
-export const TaskList = () => {
-  const tasks = useSelector(state => state.tasks.items);
 
-  const statusFilter = useSelector(state => state.filters.status);
+export const TaskList = () => {
+  const tasks = useSelector(getTasks);
+  const statusFilter = useSelector(getStatusFilter);
   const visibleTasks = getVisibleTasks(tasks, statusFilter);
+
   return (
-    <ul className={cssTaskList.list}>
+    <ul className={css.list}>
       {visibleTasks.map(task => (
-        <li className={cssTaskList.listItem} key={task.id}>
+        <li className={css.listItem} key={task.id}>
           <Task task={task} />
         </li>
       ))}
@@ -209,10 +203,25 @@ export const TaskList = () => {
 };
 
 const App = () => {
+  const dispatch = useDispatch();
+  const isLoading = useSelector(getIsLoading);
+  const error = useSelector(getError);
+  // const { items, isLoading, error } = useSelector(state => state.tasks);
+
+  useEffect(() => {
+    dispatch(fetchTasks());
+  }, [dispatch]);
+
   return (
+    // <div>
+    //   {isLoading && <p>Loading tasks...</p>}
+    //   {error && <p>{error}</p>}
+    //   <p>{items.length > 0 && JSON.stringify(items, null, 2)}</p>
+    // </div>
     <Layout>
       <AppBar />
       <TaskForm />
+      {isLoading && !error && <b>Request in progress...</b>}
       <TaskList />
     </Layout>
   );
