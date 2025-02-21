@@ -236,7 +236,7 @@ export const Modal = () => {
   );
 };
 
-export const DaysOfMonth = ({ manyDays, month }) => {
+export const DaysOfMonth = ({ manyDays, month, monthDays }) => {
   return (
     <ul
       style={{
@@ -287,7 +287,7 @@ export const DaysOfMonth = ({ manyDays, month }) => {
   );
 };
 
-export const Month = ({ manyDays, month }) => {
+export const Month = ({ manyDays, month, monthDays }) => {
   return (
     <div style={{ width: 544, height: 322 }}>
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
@@ -316,10 +316,16 @@ const App = () => {
   };
 
   const month = date.toLocaleString('default', { month: 'long' });
-  console.log(month);
+  // console.log(month);
 
   const manyDays = new Date(daysInMonth.y, daysInMonth.m, 0).getDate();
-  console.log(manyDays);
+  // console.log(manyDays);
+
+  let monthDays = [];
+  for (let index = 0; index < manyDays; index++) {
+    monthDays.push(index + 1);
+  }
+  console.log(monthDays);
 
   useEffect(() => {
     dispatch(fetchTasks());
@@ -328,7 +334,7 @@ const App = () => {
   return (
     <div className={css.container}>
       {/*  */}
-      <Month manyDays={manyDays} month={month} />
+      <Month manyDays={manyDays} month={month} monthDays={monthDays} />
 
       <button
         type="button"
