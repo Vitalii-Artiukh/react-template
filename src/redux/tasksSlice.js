@@ -14,24 +14,19 @@ const handleRejected = (state, action) => {
 const tasksSlice = createSlice({
   name: 'tasks',
   initialState: {
-    items: [],
+    items: [
+      { id: 0, text: 'Learn HTML and CSS', completed: true },
+      { id: 1, text: 'Get good at JavaScript', completed: true },
+      { id: 2, text: 'Master React', completed: false },
+      { id: 3, text: 'Discover Redux', completed: false },
+      { id: 4, text: 'Build amazing apps', completed: false },
+    ],
     isLoading: false,
     error: null,
   },
 
   extraReducers: builder => {
     builder
-      .addCase(toggleCompleted.pending, handlePending)
-      .addCase(toggleCompleted.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.error = null;
-        const index = state.items.findIndex(
-          task => task.id === action.payload.id
-        );
-        state.items.splice(index, 1, action.payload);
-      })
-      .addCase(toggleCompleted.rejected, handleRejected)
-
       .addCase(fetchTasks.pending, handlePending)
       .addCase(fetchTasks.fulfilled, (state, action) => {
         state.isLoading = false;
@@ -57,7 +52,18 @@ const tasksSlice = createSlice({
         );
         state.items.splice(index, 1);
       })
-      .addCase(deleteTask.rejected, handleRejected);
+      .addCase(deleteTask.rejected, handleRejected)
+
+      .addCase(toggleCompleted.pending, handlePending)
+      .addCase(toggleCompleted.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.error = null;
+        const index = state.items.findIndex(
+          task => task.id === action.payload.id
+        );
+        state.items.splice(index, 1, action.payload);
+      })
+      .addCase(toggleCompleted.rejected, handleRejected);
   },
   // reducers: {
   // // Виконається в момент старту HTTP-запиту
@@ -115,11 +121,11 @@ export default tasksSlice.reducer;
 
 //   initialState: {
 //     items: [
-//       { id: 0, text: 'Learn HTML and CSS', completed: true },
-//       { id: 1, text: 'Get good at JavaScript', completed: true },
-//       { id: 2, text: 'Master React', completed: false },
-//       { id: 3, text: 'Discover Redux', completed: false },
-//       { id: 4, text: 'Build amazing apps', completed: false },
+// {  "text": 'Learn HTML and CSS', "completed": true,"id": "0" },
+// { "id": "1", "text": "Get good at JavaScript", "completed": true },
+// { "id": "2", "text": "Master React", "completed": false },
+// { "id": "3", "text": "Discover Redux", "completed": false },
+// { "id": "4", "text": "Build amazing apps", "completed": false },
 //     ],
 //   },
 

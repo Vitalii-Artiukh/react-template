@@ -17,7 +17,7 @@ import { MdClose } from 'react-icons/md';
 import css from './App.module.css';
 import cssAppBar from './css/AppBar.module.css';
 import cssButton from './css/Button.module.css';
-import cssLayout from './css/Layout.module.css';
+// import cssLayout from './css/Layout.module.css';
 import cssTask from './css/Task.module.css';
 import cssTaskCounter from './css/TaskCounter.module.css';
 import cssTaskForm from './css/TaskForm.module.css';
@@ -31,21 +31,30 @@ import {
   toggleCompleted,
 } from '../redux/operations';
 import {
-  getError,
-  getIsLoading,
-  getStatusFilter,
-  getTasks,
+  selectError,
+  selectIsLoading,
+  selectItems,
+  selectStatusFilter,
+  selectTaskCount,
+  selectTasks,
+  selectVisibleItems,
 } from '../redux/selectors';
+import { toFormData } from 'axios';
+import {
+  correctDate,
+  correctMinute,
+  correctMonth,
+} from './ui/correctDateFofMy';
 
 export const AppBar = () => {
   return (
-    <header className={css.wrapper}>
-      <section className={css.section}>
-        <h2 className={css.title}>Tasks</h2>
+    <header className={cssAppBar.wrapper}>
+      <section className={cssAppBar.section}>
+        <h2 className={cssAppBar.title}>Tasks</h2>
         <TaskCounter />
       </section>
-      <section className={css.section}>
-        <h2 className={css.title}>Filter by status</h2>
+      <section className={cssAppBar.section}>
+        <h2 className={cssAppBar.title}>Filter by status</h2>
         <StatusFilter />
       </section>
     </header>
@@ -60,8 +69,8 @@ export const Button = ({
 }) => {
   return (
     <button
-      className={clsx(css.btn, {
-        [css.isSelected]: selected,
+      className={clsx(cssButton.btn, {
+        [cssButton.isSelected]: selected,
       })}
       type={type}
       {...otherProps}
@@ -71,13 +80,13 @@ export const Button = ({
   );
 };
 
-export const Layout = ({ children }) => {
-  return <main className={css.container}>{children}</main>;
-};
+// export const Layout = ({ children }) => {
+//   return <main className={css.container}>{children}</main>;
+// };
 
 export const StatusFilter = () => {
   const dispatch = useDispatch();
-  const filter = useSelector(getStatusFilter);
+  const filter = useSelector(selectStatusFilter);
 
   const handleFilterChange = filter => dispatch(setStatusFilter(filter));
 
@@ -114,15 +123,15 @@ export const Task = ({ task }) => {
   };
 
   return (
-    <div className={css.wrapper}>
+    <div className={cssTask.wrapper}>
       <input
         type="checkbox"
-        className={css.checkbox}
+        className={cssTask.checkbox}
         checked={task.completed}
         onChange={handleToggle}
       />
-      <p className={css.text}>{task.text}</p>
-      <button className={css.btn} onClick={handleDelete}>
+      <p className={cssTask.text}>{task.text}</p>
+      <button className={cssTask.btn} onClick={handleDelete}>
         <MdClose size={24} />
       </button>
     </div>
@@ -130,24 +139,12 @@ export const Task = ({ task }) => {
 };
 
 export const TaskCounter = () => {
-  const tasks = useSelector(getTasks);
-
-  const count = tasks.reduce(
-    (acc, task) => {
-      if (task.completed) {
-        acc.completed += 1;
-      } else {
-        acc.active += 1;
-      }
-      return acc;
-    },
-    { active: 0, completed: 0 }
-  );
+  const count = useSelector(selectTaskCount);
 
   return (
     <div>
-      <p className={css.text}>Active: {count.active}</p>
-      <p className={css.text}>Completed: {count.completed}</p>
+      <p className={cssTaskCounter.text}>Active: {count.active}</p>
+      <p className={cssTaskCounter.text}>Completed: {count.completed}</p>
     </div>
   );
 };
@@ -163,9 +160,9 @@ export const TaskForm = () => {
   };
 
   return (
-    <form className={css.form} onSubmit={handleSubmit}>
+    <form className={cssTaskForm.form} onSubmit={handleSubmit}>
       <input
-        className={css.field}
+        className={cssTaskForm.field}
         type="text"
         name="text"
         placeholder="Enter task text..."
@@ -175,26 +172,14 @@ export const TaskForm = () => {
   );
 };
 /////////
-const getVisibleTasks = (tasks, statusFilter) => {
-  switch (statusFilter) {
-    case 'active':
-      return tasks.filter(task => !task.completed);
-    case 'completed':
-      return tasks.filter(task => task.completed);
-    default:
-      return tasks;
-  }
-};
 
 export const TaskList = () => {
-  const tasks = useSelector(getTasks);
-  const statusFilter = useSelector(getStatusFilter);
-  const visibleTasks = getVisibleTasks(tasks, statusFilter);
+  const visibleItems = useSelector(selectVisibleItems);
 
   return (
-    <ul className={css.list}>
-      {visibleTasks.map(task => (
-        <li className={css.listItem} key={task.id}>
+    <ul className={cssTaskList.list}>
+      {visibleItems.map(task => (
+        <li className={cssTaskList.listItem} key={task.id}>
           <Task task={task} />
         </li>
       ))}
@@ -202,28 +187,177 @@ export const TaskList = () => {
   );
 };
 
+export const Modal = () => {
+  const [myDate, setMyDate] = useState(null);
+  const [myTime, setMyTime] = useState(null);
+
+  useEffect(() => {
+    setMyDate(
+      `Date: ${correctDate()}.${correctMonth()}.${new Date().getFullYear()} `
+    );
+
+    const idInterval = setInterval(() => {
+      setMyDate(
+        `Date: ${correctDate()}.${correctMonth()}.${new Date().getFullYear()} `
+      );
+    }, 60000);
+
+    return () => {
+      clearInterval(idInterval);
+    };
+  }, [myDate]);
+
+  useEffect(() => {
+    setMyTime(`Time: ${new Date().getHours()}:${correctMinute()}`);
+
+    const idInterval = setInterval(() => {
+      setMyTime(`Time: ${new Date().getHours()}:${correctMinute()}`);
+    }, 60000);
+
+    return () => {
+      clearInterval(idInterval);
+    };
+  }, [myTime]);
+
+  return (
+    <div
+      style={{
+        margin: 'auto',
+        width: 200,
+        height: 80,
+        position: 'absolute',
+        top: 20,
+        right: 20,
+      }}
+    >
+      <h2 style={{ marginBottom: 8 }}>{myDate}</h2>
+      <h2>{myTime}</h2>
+    </div>
+  );
+};
+
+export const DaysOfMonth = ({ manyDays, month }) => {
+  return (
+    <ul
+      style={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        rowGap: 22,
+        columnGap: 20,
+        padding: 0,
+      }}
+    >
+      {/* {map()} */}
+      <li style={{ justifyItems: 'center', height: 56 }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 34,
+            height: 34,
+            borderRadius: '50%',
+            border: '0.5px solid #FF9D43',
+            marginBottom: 4,
+          }}
+        >
+          30
+        </div>
+        <p style={{ fontSize: 12, fontWeight: 400, color: '#9EBBFF' }}>100%</p>
+      </li>
+
+      <li style={{ justifyItems: 'center', height: 56 }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 34,
+            height: 34,
+            borderRadius: '50%',
+            border: '0.5px solid #FF9D43',
+            marginBottom: 4,
+          }}
+        >
+          31
+        </div>
+        <p style={{ fontSize: 12, fontWeight: 400, color: '#9EBBFF' }}>80%</p>
+      </li>
+    </ul>
+  );
+};
+
+export const Month = ({ manyDays, month }) => {
+  return (
+    <div style={{ width: 544, height: 322 }}>
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
+        <h2>Month</h2>
+        <button type="button" style={{ marginLeft: 'auto' }}>
+          L
+        </button>
+        <p>April, 2023</p>
+        <button type="button">R</button>
+      </div>
+      <DaysOfMonth manyDays={manyDays} month={month} />
+    </div>
+  );
+};
+
 const App = () => {
+  const [isOpen, setIsOpen] = useState(false);
   const dispatch = useDispatch();
-  const isLoading = useSelector(getIsLoading);
-  const error = useSelector(getError);
-  // const { items, isLoading, error } = useSelector(state => state.tasks);
+  const { isLoading, error } = useSelector(selectTasks);
+
+  const date = new Date();
+
+  const daysInMonth = {
+    y: date.getFullYear(),
+    m: date.getMonth() + 1,
+  };
+
+  const month = date.toLocaleString('default', { month: 'long' });
+  console.log(month);
+
+  const manyDays = new Date(daysInMonth.y, daysInMonth.m, 0).getDate();
+  console.log(manyDays);
 
   useEffect(() => {
     dispatch(fetchTasks());
   }, [dispatch]);
 
   return (
-    // <div>
-    //   {isLoading && <p>Loading tasks...</p>}
-    //   {error && <p>{error}</p>}
-    //   <p>{items.length > 0 && JSON.stringify(items, null, 2)}</p>
-    // </div>
-    <Layout>
+    <div className={css.container}>
+      {/*  */}
+      <Month manyDays={manyDays} month={month} />
+
+      <button
+        type="button"
+        style={{ height: 40, backgroundColor: 'blueviolet' }}
+        onClick={() => {
+          setIsOpen(!isOpen);
+        }}
+      >
+        {isOpen ? 'Close' : 'Open'}
+      </button>
+
+      {isOpen && <Modal />}
+
+      {/*  */}
+
       <AppBar />
       <TaskForm />
-      {isLoading && !error && <b>Request in progress...</b>}
+      <div className={css.loadingWrapper}>
+        {isLoading && !error && <b>Request in progress...</b>}
+      </div>
+
       <TaskList />
-    </Layout>
+    </div>
+    // <Layout className={clsx(css.container)}>
+    //   <AppBar />
+    //   <TaskForm />
+    //   {isLoading && !error && <b>Request in progress...</b>}
+    //   <TaskList />
+    // </Layout>
   );
 };
 

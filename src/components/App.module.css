@@ -5,6 +5,9 @@
   margin: 0 auto;
   padding: 16px;
 }
+.loadingWrapper {
+  height: 24px;
+}
 
 /* .logo {
   height: 6em;
