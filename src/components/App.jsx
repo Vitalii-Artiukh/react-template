@@ -1,17 +1,17 @@
 import {
-  Children,
+  // Children,
   useState,
-  react,
+  // react,
   useEffect,
-  Component,
-  useId,
-  useMemo,
-  useRef,
-  forwardRef,
-  createContext,
+  // Component,
+  // useId,
+  // useMemo,
+  // useRef,
+  // forwardRef,
+  // createContext,
 } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { NavLink, Route, Routes, useParams } from 'react-router-dom';
+// import { NavLink, Route, Routes, useParams } from 'react-router-dom';
 import clsx from 'clsx';
 import { MdClose } from 'react-icons/md';
 import css from './App.module.css';
@@ -31,15 +31,15 @@ import {
   toggleCompleted,
 } from '../redux/operations';
 import {
-  selectError,
-  selectIsLoading,
-  selectItems,
+  // selectError,
+  // selectIsLoading,
+  // selectItems,
   selectStatusFilter,
   selectTaskCount,
   selectTasks,
   selectVisibleItems,
 } from '../redux/selectors';
-import { toFormData } from 'axios';
+// import { toFormData } from 'axios';
 import {
   correctDate,
   correctMinute,
@@ -187,18 +187,18 @@ export const TaskList = () => {
   );
 };
 
-export const Modal = () => {
+export const Modal = ({ setIsOpen, isOpen }) => {
   const [myDate, setMyDate] = useState(null);
   const [myTime, setMyTime] = useState(null);
 
   useEffect(() => {
     setMyDate(
-      `Date: ${correctDate()}.${correctMonth()}.${new Date().getFullYear()} `
+      `Date: ${correctDate()}.${correctMonth()}.${new Date().getFullYear()}`
     );
 
     const idInterval = setInterval(() => {
       setMyDate(
-        `Date: ${correctDate()}.${correctMonth()}.${new Date().getFullYear()} `
+        `Date: ${correctDate()}.${correctMonth()}.${new Date().getFullYear()}`
       );
     }, 60000);
 
@@ -219,6 +219,12 @@ export const Modal = () => {
     };
   }, [myTime]);
 
+  const clearTimeModal = () => {
+    setIsOpen(!isOpen);
+    localStorage.removeItem('saved-date');
+    localStorage.removeItem('saved-time');
+  };
+
   return (
     <div
       style={{
@@ -232,11 +238,27 @@ export const Modal = () => {
     >
       <h2 style={{ marginBottom: 8 }}>{myDate}</h2>
       <h2>{myTime}</h2>
+      <button type="button" onClick={clearTimeModal}>
+        Clear time
+      </button>
     </div>
   );
 };
 
-export const DaysOfMonth = ({ manyDays, month, monthDays }) => {
+export const DaysOfMonth = ({ manyDays }) => {
+  let monthDays = [];
+
+  for (let index = 0; index < manyDays; index++) {
+    monthDays.push(index + 1);
+  }
+
+  const names = ['Иван', 'Олег', 'Петр', 'Глеб'];
+  const obj = monthDays.reduce((object, value, index) => {
+    return { ...object, [index + 1]: value };
+  }, {});
+
+  console.log(obj);
+
   return (
     <ul
       style={{
@@ -247,47 +269,30 @@ export const DaysOfMonth = ({ manyDays, month, monthDays }) => {
         padding: 0,
       }}
     >
-      {/* {map()} */}
-      <li style={{ justifyItems: 'center', height: 56 }}>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 34,
-            height: 34,
-            borderRadius: '50%',
-            border: '0.5px solid #FF9D43',
-            marginBottom: 4,
-          }}
-        >
-          30
-        </div>
-        <p style={{ fontSize: 12, fontWeight: 400, color: '#9EBBFF' }}>100%</p>
-      </li>
-
-      <li style={{ justifyItems: 'center', height: 56 }}>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 34,
-            height: 34,
-            borderRadius: '50%',
-            border: '0.5px solid #FF9D43',
-            marginBottom: 4,
-          }}
-        >
-          31
-        </div>
-        <p style={{ fontSize: 12, fontWeight: 400, color: '#9EBBFF' }}>80%</p>
-      </li>
+      {monthDays.map(day => (
+        <li key={day} style={{ justifyItems: 'center', height: 56 }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 34,
+              height: 34,
+              borderRadius: '50%',
+              border: '0.5px solid #FF9D43',
+              marginBottom: 4,
+            }}
+          >
+            {day}
+          </div>
+          <p style={{ fontSize: 12, fontWeight: 400, color: '#9EBBFF' }}>0%</p>
+        </li>
+      ))}
     </ul>
   );
 };
 
-export const Month = ({ manyDays, month, monthDays }) => {
+export const Month = ({ daysInMonth }) => {
   return (
     <div style={{ width: 544, height: 322 }}>
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
@@ -295,10 +300,12 @@ export const Month = ({ manyDays, month, monthDays }) => {
         <button type="button" style={{ marginLeft: 'auto' }}>
           L
         </button>
-        <p>April, 2023</p>
+        <p>
+          {daysInMonth.monthDefault}, {daysInMonth.year}
+        </p>
         <button type="button">R</button>
       </div>
-      <DaysOfMonth manyDays={manyDays} month={month} />
+      <DaysOfMonth manyDays={daysInMonth.manyDays} />
     </div>
   );
 };
@@ -311,42 +318,58 @@ const App = () => {
   const date = new Date();
 
   const daysInMonth = {
-    y: date.getFullYear(),
-    m: date.getMonth() + 1,
+    year: date.getFullYear(),
+    month: date.getMonth() + 1,
+    monthDefault: date.toLocaleString('default', { month: 'long' }),
+    manyDays: new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate(),
   };
 
-  const month = date.toLocaleString('default', { month: 'long' });
+  //
+
+  // const monthDefault = date.toLocaleString('default', { month: 'long' });
   // console.log(month);
 
-  const manyDays = new Date(daysInMonth.y, daysInMonth.m, 0).getDate();
+  // const manyDays = new Date(daysInMonth.year, daysInMonth.month, 0).getDate();
   // console.log(manyDays);
 
-  let monthDays = [];
-  for (let index = 0; index < manyDays; index++) {
-    monthDays.push(index + 1);
-  }
-  console.log(monthDays);
+  // let monthDays = [];
+  // for (let index = 0; index < manyDays; index++) {
+  //   monthDays.push(index + 1);
+  // }
+  // console.log(monthDays);
 
   useEffect(() => {
     dispatch(fetchTasks());
   }, [dispatch]);
 
+  const clickButtonModal = () => {
+    setIsOpen(!isOpen);
+    const myDate = `Date: ${correctDate()}.${correctMonth()}.${new Date().getFullYear()}`;
+    const myTime = `Time: ${new Date().getHours()}:${correctMinute()}`;
+    const savedDate = localStorage.getItem('saved-date');
+    const savedTime = localStorage.getItem('saved-time');
+    if (savedDate === null) {
+      localStorage.setItem('saved-date', myDate);
+    }
+    if (savedTime === null) {
+      localStorage.setItem('saved-time', myTime);
+    }
+  };
+
   return (
     <div className={css.container}>
       {/*  */}
-      <Month manyDays={manyDays} month={month} monthDays={monthDays} />
+      <Month daysInMonth={daysInMonth} />
 
       <button
         type="button"
         style={{ height: 40, backgroundColor: 'blueviolet' }}
-        onClick={() => {
-          setIsOpen(!isOpen);
-        }}
+        onClick={clickButtonModal}
       >
         {isOpen ? 'Close' : 'Open'}
       </button>
 
-      {isOpen && <Modal />}
+      {isOpen && <Modal setIsOpen={setIsOpen} isOpen={isOpen} />}
 
       {/*  */}
 
